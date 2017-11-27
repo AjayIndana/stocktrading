@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Button,
   Alert,
+  FlatList,
   TouchableOpacity
 } from 'react-native';
 import Title from './Title';
@@ -16,13 +17,15 @@ import * as globalStyles from '../styles/global';
 export default class HomeScreen extends Component<{}> {
   constructor(){
         super()
-        this.state ={
-            change: false,
-            closePrice: '',
-            EMA: '',
-            signal: '',
-            SlowD: '',
-            SlowK: ''
+         this.state ={
+             AMDchange: false,
+             SQchange: false,
+             BZUNchange: false,
+        //     closePrice: '',
+        //     EMA: '',
+        //     signal: '',
+        //     SlowD: '',
+        //     SlowK: ''
         }
         this.getStates = this.getStates.bind(this);
         this.getSignal = this.getSignal.bind(this);
@@ -32,92 +35,98 @@ export default class HomeScreen extends Component<{}> {
     }
 
    componentDidMount = () => {
-      this.getStates();
+  //    this.getStates('AMD');
    }
 
    componentDidUpdate = () => {
-      if(this.state.change){
-        this.getSignal();
+      if(this.state.AMDchange){
+        this.getSignal('AMD');
+      }
+      if(this.state.SQchange){
+        this.getSignal('SQ');
+      }
+      if(this.state.BZUNchange){
+        this.getSignal('BZUN');
       }
    }
 
-   getStates() {
-     this.getEMA();
-     this.getSTOCH();
-     this.getClosePrice();
+   getStates(symbol) {
+     this.getEMA(symbol);
+     this.getSTOCH(symbol);
+     this.getClosePrice(symbol);
    }
 
-    getClosePrice() {
-     return fetch('https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=AMD&interval=1min&apikey=K0W08Y43EKGCJ16I')
+    getClosePrice(symbol) {
+     return fetch('https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+symbol+'&interval=1min&apikey=K0W08Y43EKGCJ16I')
        .then((response) => response.json())
        .then((responseJson) => {
          var result = responseJson["Time Series (1min)"];
          var key = Object.keys(result)[0];
          var closePrice = result[key]["4. close"];
-         this.setState({closePrice: closePrice});
-         console.log('closePrice: ' + closePrice);
-         this.setState({change: true});
+         this.setState({[symbol+'closePrice']: closePrice});
+         console.log(symbol+' closePrice: ' + closePrice);
+         this.setState({[symbol+'change']: true});
        })
        .catch((error) => {
          console.error(error);
        });
    }
 
-   getEMA() {
-    return fetch('https://www.alphavantage.co/query?function=EMA&symbol=AMD&interval=1min&time_period=60&series_type=close&apikey=K0W08Y43EKGCJ16I')
+   getEMA(symbol) {
+    return fetch('https://www.alphavantage.co/query?function=EMA&symbol='+symbol+'&interval=1min&time_period=60&series_type=close&apikey=K0W08Y43EKGCJ16I')
       .then((response) => response.json())
       .then((responseJson) => {
         var result = responseJson["Technical Analysis: EMA"];
         var key = Object.keys(result)[0];
         var EMA = result[key]["EMA"];
-        this.setState({EMA: EMA});
-        console.log('EMA: ' + EMA);
-        this.setState({change: true});
+        this.setState({[symbol+'EMA']: EMA});
+        console.log(symbol+' EMA: ' + EMA);
+        this.setState({[symbol+'change']: true});
       })
       .catch((error) => {
         console.error(error);
       });
   }
 
-  getSTOCH() {
-   return fetch('https://www.alphavantage.co/query?function=STOCH&symbol=AMD&interval=1min&slowkmatype=1&slowdmatype=1&fastkperiod=14&apikey=K0W08Y43EKGCJ16I')
+  getSTOCH(symbol) {
+   return fetch('https://www.alphavantage.co/query?function=STOCH&symbol='+symbol+'&interval=1min&slowkmatype=1&slowdmatype=1&fastkperiod=14&apikey=K0W08Y43EKGCJ16I')
      .then((response) => response.json())
      .then((responseJson) => {
        var result = responseJson["Technical Analysis: STOCH"];
        var key = Object.keys(result)[0];
        var SlowD = result[key]["SlowD"];
        var SlowK = result[key]["SlowK"];
-       this.setState({SlowD: SlowD});
-       this.setState({SlowK: SlowK});
-       console.log('SlowD: ' + SlowD);
-       console.log('SlowK: ' + SlowK);
-       this.setState({change: true});
+       this.setState({[symbol+'SlowD']: SlowD});
+       this.setState({[symbol+'SlowK']: SlowK});
+       console.log(symbol+' SlowD: ' + SlowD);
+       console.log(symbol+' SlowK: ' + SlowK);
+       this.setState({[symbol+'change']: true});
      })
      .catch((error) => {
        console.error(error);
      });
  }
 
-  getSignal(){
-    var closePrice = this.state.closePrice;
-    var EMA = this.state.EMA;
-    var SlowD = this.state.SlowD;
-    var SlowK = this.state.SlowK;
+  getSignal(symbol){
+    var closePrice = this.state[symbol+'closePrice'];
+    var EMA = this.state[symbol+'EMA'];
+    var SlowD = this.state[symbol+'SlowD'];
+    var SlowK = this.state[symbol+'SlowK'];
     if(closePrice > EMA && SlowK>SlowD && SlowD<25){
       this.setState({signal: 'BUY'});
     }
     else if(SlowD>SlowK && SlowD>75){
       if(closePrice > EMA){
-        this.setState({signal: 'UPSELL'});
+        this.setState({[symbol+'signal']: 'UPSELL'});
       }
       else {
-        this.setState({signal: 'DOWNSELL'});
+        this.setState({[symbol+'signal']: 'DOWNSELL'});
       }
     }
     else{
-      this.setState({signal: 'NEUTRAL'});
+      this.setState({[symbol+'signal']: 'NEUTRAL'});
     }
-    this.setState({change: false});
+    this.setState({[symbol+'change']: false});
   }
 
   render() {
@@ -125,16 +134,17 @@ export default class HomeScreen extends Component<{}> {
       <View style={{backgroundColor: 'powderblue', flex: 1}}>
         <View style={{flex: 1, backgroundColor: 'powderblue'}} />
         <View style={{flex: 24, backgroundColor: 'powderblue'}}>
-          <View style={{
-            flex: 1,
-            flexDirection: 'column'
-          }}>
-            <View>
-              <Title>Stock Trading Application</Title>
-            </View>
-            <TouchableOpacity onPress ={this.getStates}>
-              <StockRow symbol='AMD' closePrice={this.state.closePrice} signal={this.state.signal}/>
-            </TouchableOpacity>
+          <View>
+               <Title>Stock Trading Application</Title>
+               <TouchableOpacity onPress ={this.getStates('AMD')}>
+                <StockRow symbol='AMD' closePrice={this.state.AMDclosePrice} signal={this.state.AMDsignal} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress ={this.getStates('SQ')}>
+                <StockRow symbol='SQ' closePrice={this.state.SQclosePrice} signal={this.state.SQsignal} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress ={this.getStates('BZUN')}>
+                <StockRow symbol='BZUN' closePrice={this.state.BZUNclosePrice} signal={this.state.BZUNsignal} />
+              </TouchableOpacity>
           </View>
         </View>
       </View>

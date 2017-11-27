@@ -25,7 +25,6 @@ StockRow.propTypes = {
 
 const styles = StyleSheet.create({
   stockRow: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start'
