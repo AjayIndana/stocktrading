@@ -12,6 +12,7 @@ import {
 import Title from './Title';
 import AppText from './AppText';
 import StockRow from './StockRow';
+import Market from './Market';
 import * as globalStyles from '../styles/global';
 
 export default class HomeScreen extends Component<{}> {
@@ -41,6 +42,7 @@ export default class HomeScreen extends Component<{}> {
         this.getSTOCH = this.getSTOCH.bind(this);
         this.getPLUSDI = this.getPLUSDI.bind(this);
         this.getMINUSDI = this.getMINUSDI.bind(this);
+        this.getRSI = this.getRSI.bind(this);
     }
 
    componentDidMount = () => {
@@ -60,11 +62,14 @@ export default class HomeScreen extends Component<{}> {
    }
 
    getStates(symbol) {
+     this.getPLUSDI('IXIC');
+     this.getMINUSDI('IXIC');
      this.getEMA(symbol);
      this.getSTOCH(symbol);
      this.getClosePrice(symbol);
      this.getPLUSDI(symbol);
      this.getMINUSDI(symbol);
+     this.getRSI(symbol);
    }
 
     getClosePrice(symbol) {
@@ -138,6 +143,24 @@ export default class HomeScreen extends Component<{}> {
     });
 }
 
+
+getRSI(symbol) {
+ return fetch('https://www.alphavantage.co/query?function=RSI&symbol='+symbol+'&interval=1min&time_period=7&series_type=close&apikey=K0W08Y43EKGCJ16I')
+   .then((response) => response.json())
+   .then((responseJson) => {
+     var result = responseJson["Technical Analysis: RSI"];
+     var key = Object.keys(result)[0];
+     var RSI = result[key]["RSI"];
+     this.setState({[symbol+'RSI']: RSI});
+     console.log(symbol+' RSI: ' + RSI);
+     this.setState({[symbol+'change']: true});
+   })
+   .catch((error) => {
+     // console.log(responseJson);
+     // console.error(error);
+   });
+}
+
 getMINUSDI(symbol) {
  return fetch('https://www.alphavantage.co/query?function=MINUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey=K0W08Y43EKGCJ16I')
    .then((response) => response.json())
@@ -156,24 +179,47 @@ getMINUSDI(symbol) {
 }
 
   getSignal(symbol){
+    var MarketMINUS_DI = this.state['IXIC'+'MINUS_DI'];
+    var MarketPLUS_DI = this.state['IXIC'+'PLUS_DI'];
     var closePrice = this.state[symbol+'closePrice'];
     var EMA = this.state[symbol+'EMA'];
     var SlowD = this.state[symbol+'SlowD'];
     var SlowK = this.state[symbol+'SlowK'];
     var PLUS_DI = this.state[symbol+'PLUS_DI'];
     var MINUS_DI = this.state[symbol+'MINUS_DI'];
+    var RSI = this.state[symbol+'RSI'];
+
+    if(MarketPLUS_DI > MarketMINUS_DI && MarketPLUS_DI>25){
+      this.setState({market: 'UP'});
+    }
+    else if(MarketPLUS_DI < MarketMINUS_DI && MarketMINUS_DI>25){
+      this.setState({market: 'DOWN'});
+    }
+    else {
+      this.setState({market: 'FLAT'});
+    }
+
     if(closePrice > EMA && SlowK>SlowD && SlowD<25 && PLUS_DI>MINUS_DI && PLUS_DI>25){
       this.setState({signal: 'STRONG BUY'});
     }
     else if(closePrice > EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
       this.setState({signal: 'BUY'});
     }
+    else if(closePrice > EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+      this.setState({signal: 'SELL'});
+    }
+    else if(closePrice < EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+      this.setState({signal: 'SHORT'});
+    }
+    else if(closePrice > EMA && RSI<30){
+      this.setState({signal: 'BUY'});
+    }
     else if(SlowD>SlowK && SlowD>75){
-      if(closePrice > EMA){
-        this.setState({[symbol+'signal']: 'UPSELL'});
+      if(closePrice > EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+        this.setState({[symbol+'signal']: 'SELL'});
       }
-      else {
-        this.setState({[symbol+'signal']: 'DOWNSELL'});
+      else if(closePrice < EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+        this.setState({[symbol+'signal']: 'SHORT'});
       }
     }
     else{
@@ -189,6 +235,7 @@ getMINUSDI(symbol) {
         <View style={{flex: 24, backgroundColor: 'powderblue'}}>
           <View>
                 <Title>Stock Trading Application</Title>
+                <Market symbol='NASDAQ' signal={this.state.market} />
                 <StockRow symbol='AMD' closePrice={this.state.AMDclosePrice} signal={this.state.AMDsignal} />
                 <StockRow symbol='SQ' closePrice={this.state.SQclosePrice} signal={this.state.SQsignal} />
                 <StockRow symbol='BZUN' closePrice={this.state.BZUNclosePrice} signal={this.state.BZUNsignal} />
