@@ -1,5 +1,5 @@
 import React, { PropTypes, Component } from 'react';
-import { Alert, Text, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Alert, Text, StyleSheet, View, TouchableOpacity, Button } from 'react-native';
 import Sticker from './Sticker';
 import Signal from './Signal';
 import ClosePrice from './ClosePrice';

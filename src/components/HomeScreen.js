@@ -16,12 +16,19 @@ import Market from './Market';
 import * as globalStyles from '../styles/global';
 
 export default class HomeScreen extends Component<{}> {
+
   constructor(){
         super()
          this.state ={
              AMDchange: false,
              SQchange: false,
              BZUNchange: false,
+             NVDAchange: false,
+             SHOPchange: false,
+             OLEDchange: false,
+             ATVIchange: false,
+             LRCXchange: false,
+             DALchange: false
         //     closePrice: '',
         //     EMA: '',
         //     signal: '',
@@ -33,7 +40,13 @@ export default class HomeScreen extends Component<{}> {
           this.getStates('AMD');
           this.getStates('SQ');
           this.getStates('BZUN');
-        }, 1000);
+          this.getStates('NVDA');
+          this.getStates('SHOP');
+          this.getStates('OLED');
+          this.getStates('ATVI');
+          this.getStates('LRCX');
+          this.getStates('DAL');
+        }, 7000);
 
         this.getStates = this.getStates.bind(this);
         this.getSignal = this.getSignal.bind(this);
@@ -43,6 +56,8 @@ export default class HomeScreen extends Component<{}> {
         this.getPLUSDI = this.getPLUSDI.bind(this);
         this.getMINUSDI = this.getMINUSDI.bind(this);
         this.getRSI = this.getRSI.bind(this);
+        this.getOBV = this.getOBV.bind(this);
+        this.updateStock = this.updateStock.bind(this);
     }
 
    componentDidMount = () => {
@@ -59,6 +74,36 @@ export default class HomeScreen extends Component<{}> {
       if(this.state.BZUNchange){
         this.getSignal('BZUN');
       }
+      if(this.state.NVDAchange){
+        this.getSignal('NVDA');
+      }
+      if(this.state.SHOPchange){
+        this.getSignal('SHOP');
+      }
+      if(this.state.OLEDchange){
+        this.getSignal('OLED');
+      }
+      if(this.state.ATVIchange){
+        this.getSignal('ATVI');
+      }
+      if(this.state.LRCXchange){
+        this.getSignal('LRCX');
+      }
+      if(this.state.DALchange){
+        this.getSignal('DAL');
+      }
+   }
+
+   updateStock(){
+     this.getStates('AMD');
+     this.getStates('SQ');
+     this.getStates('BZUN');
+     this.getStates('NVDA');
+     this.getStates('SHOP');
+     this.getStates('OLED');
+     this.getStates('ATVI');
+     this.getStates('LRCX');
+     this.getStates('DAL');
    }
 
    getStates(symbol) {
@@ -70,6 +115,7 @@ export default class HomeScreen extends Component<{}> {
      this.getPLUSDI(symbol);
      this.getMINUSDI(symbol);
      this.getRSI(symbol);
+     this.getOBV(symbol);
    }
 
     getClosePrice(symbol) {
@@ -94,10 +140,18 @@ export default class HomeScreen extends Component<{}> {
       .then((response) => response.json())
       .then((responseJson) => {
         var result = responseJson["Technical Analysis: EMA"];
-        var key = Object.keys(result)[0];
-        var EMA = result[key]["EMA"];
-        this.setState({[symbol+'EMA']: EMA});
-        console.log(symbol+' EMA: ' + EMA);
+        var key1 = Object.keys(result)[0];
+        var key2 = Object.keys(result)[1];
+        var key3 = Object.keys(result)[2];
+        var EMA1 = result[key1]["EMA"];
+        var EMA2 = result[key2]["EMA"];
+        var EMA3 = result[key3]["EMA"];
+        if(EMA1>=EMA2 && EMA2>=EMA3){
+          this.setState({[symbol+'EMA']: true});
+        }
+        else {
+          this.setState({[symbol+'EMA']: false});
+        }
         this.setState({[symbol+'change']: true});
       })
       .catch((error) => {
@@ -105,6 +159,29 @@ export default class HomeScreen extends Component<{}> {
         // console.error(error);
       });
   }
+
+  getOBV(symbol) {
+   return fetch('https://www.alphavantage.co/query?function=OBV&symbol='+symbol+'&interval=1min&apikey=K0W08Y43EKGCJ16I')
+     .then((response) => response.json())
+     .then((responseJson) => {
+       var result = responseJson["Technical Analysis: OBV"];
+       var key1 = Object.keys(result)[0];
+       var OBV1 = result[key1]["OBV"];
+       var key2 = Object.keys(result)[1];
+       var OBV2 = result[key2]["OBV"];
+       if(OBV1>OBV2){
+         this.setState({[symbol+'OBV']: true});
+       }
+       else {
+         this.setState({[symbol+'OBV']: false});
+       }
+       this.setState({[symbol+'change']: true});
+     })
+     .catch((error) => {
+       // console.log(responseJson);
+       // console.error(error);
+     });
+ }
 
   getSTOCH(symbol) {
    return fetch('https://www.alphavantage.co/query?function=STOCH&symbol='+symbol+'&interval=1min&slowkmatype=1&slowdmatype=1&fastkperiod=14&apikey=K0W08Y43EKGCJ16I')
@@ -188,6 +265,7 @@ getMINUSDI(symbol) {
     var PLUS_DI = this.state[symbol+'PLUS_DI'];
     var MINUS_DI = this.state[symbol+'MINUS_DI'];
     var RSI = this.state[symbol+'RSI'];
+    var OBV = this.state[symbol+'OBV'];
 
     if(MarketPLUS_DI > MarketMINUS_DI && MarketPLUS_DI>25){
       this.setState({market: 'UP'});
@@ -199,28 +277,26 @@ getMINUSDI(symbol) {
       this.setState({market: 'FLAT'});
     }
 
-    if(closePrice > EMA && SlowK>SlowD && SlowD<25 && PLUS_DI>MINUS_DI && PLUS_DI>25){
+    if(EMA && SlowK>SlowD && SlowD<25 && PLUS_DI>MINUS_DI && PLUS_DI>25 && OBV){
       this.setState({signal: 'STRONG BUY'});
     }
-    else if(closePrice > EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
+    else if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25 && SlowK>SlowD && OBV){
+      this.setState({signal: 'GOOD BUY'});
+    }
+    else if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25 && SlowK>SlowD){
       this.setState({signal: 'BUY'});
     }
-    else if(closePrice > EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+    else if(EMA && RSI<30 && OBV){
+      this.setState({signal: 'BUY'});
+    }
+    else if(!EMA && PLUS_DI<MINUS_DI && MINUS_DI>25 && SlowK<SlowD && SlowD>75 && !OBV){
+      this.setState({signal: 'STRONG SELL'});
+    }
+    else if(!EMA && PLUS_DI<MINUS_DI && MINUS_DI>25 && SlowK<SlowD && !OBV){
       this.setState({signal: 'SELL'});
     }
-    else if(closePrice < EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
-      this.setState({signal: 'SHORT'});
-    }
-    else if(closePrice > EMA && RSI<30){
-      this.setState({signal: 'BUY'});
-    }
-    else if(SlowD>SlowK && SlowD>75){
-      if(closePrice > EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
-        this.setState({[symbol+'signal']: 'SELL'});
-      }
-      else if(closePrice < EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
-        this.setState({[symbol+'signal']: 'SHORT'});
-      }
+    else if(!EMA && ((PLUS_DI<MINUS_DI && MINUS_DI>25) || !OBV)){
+      this.setState({[symbol+'signal']: 'PARTIAL SELL'});
     }
     else{
       this.setState({[symbol+'signal']: 'NEUTRAL'});
@@ -231,17 +307,24 @@ getMINUSDI(symbol) {
   render() {
     return (
       <View style={{backgroundColor: 'powderblue', flex: 1}}>
-        <View style={{flex: 1, backgroundColor: 'powderblue'}} />
-        <View style={{flex: 24, backgroundColor: 'powderblue'}}>
           <View>
                 <Title>Stock Trading Application</Title>
                 <Market symbol='NASDAQ' signal={this.state.market} />
                 <StockRow symbol='AMD' closePrice={this.state.AMDclosePrice} signal={this.state.AMDsignal} />
                 <StockRow symbol='SQ' closePrice={this.state.SQclosePrice} signal={this.state.SQsignal} />
                 <StockRow symbol='BZUN' closePrice={this.state.BZUNclosePrice} signal={this.state.BZUNsignal} />
+                <StockRow symbol='NVDA' closePrice={this.state.NVDAclosePrice} signal={this.state.NVDAsignal} />
+                <StockRow symbol='SHOP' closePrice={this.state.SHOPclosePrice} signal={this.state.SHOPsignal} />
+                <StockRow symbol='OLED' closePrice={this.state.OLEDclosePrice} signal={this.state.OLEDsignal} />
+                <StockRow symbol='ATVI' closePrice={this.state.ATVIclosePrice} signal={this.state.ATVIsignal} />
+                <StockRow symbol='LRCX' closePrice={this.state.LRCXclosePrice} signal={this.state.LRCXsignal} />
+                <StockRow symbol='DAL' closePrice={this.state.DALclosePrice} signal={this.state.DALsignal} />
           </View>
+          <Button
+              onPress={() => { this.updateStock()}}
+              title="Refresh"
+            />
         </View>
-      </View>
     );
   }
 }
