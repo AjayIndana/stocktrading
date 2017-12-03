@@ -13,6 +13,7 @@ class Market extends Component {
         <View style={[styles.stockRow]}>
           <Sticker>{this.props.symbol}</Sticker>
           <Signal>{this.props.signal}</Signal>
+          <Text>{this.props.updated}</Text>
         </View>
     );
   }

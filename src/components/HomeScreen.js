@@ -7,7 +7,8 @@ import {
   Button,
   Alert,
   FlatList,
-  TouchableOpacity
+  TouchableOpacity,
+  ScrollView
 } from 'react-native';
 import Title from './Title';
 import AppText from './AppText';
@@ -20,6 +21,7 @@ export default class HomeScreen extends Component<{}> {
   constructor(){
         super()
          this.state ={
+
              AMDchange: false,
              SQchange: false,
              BZUNchange: false,
@@ -28,7 +30,28 @@ export default class HomeScreen extends Component<{}> {
              OLEDchange: false,
              ATVIchange: false,
              LRCXchange: false,
-             DALchange: false
+             DALchange: false,
+
+             AMDDIP_BUY: false,
+             SQDIP_BUY: false,
+             BZUNDIP_BUY: false,
+             NVDADIP_BUY: false,
+             SHOPDIP_BUY: false,
+             OLEDDIP_BUY: false,
+             ATVIDIP_BUY: false,
+             LRCXDIP_BUY: false,
+             DALDIP_BUY: false,
+
+             AMDUP_SELL: false,
+             SQUP_SELL: false,
+             BZUNUP_SELL: false,
+             NVDAUP_SELL: false,
+             SHOPUP_SELL: false,
+             OLEDUP_SELL: false,
+             ATVIUP_SELL: false,
+             LRCXUP_SELL: false,
+             DALUP_SELL: false
+
         //     closePrice: '',
         //     EMA: '',
         //     signal: '',
@@ -46,22 +69,27 @@ export default class HomeScreen extends Component<{}> {
           this.getStates('ATVI');
           this.getStates('LRCX');
           this.getStates('DAL');
-        }, 7000);
+        }, 60000);
 
         this.getStates = this.getStates.bind(this);
         this.getSignal = this.getSignal.bind(this);
         this.getClosePrice = this.getClosePrice.bind(this);
         this.getEMA = this.getEMA.bind(this);
-        this.getSTOCH = this.getSTOCH.bind(this);
         this.getPLUSDI = this.getPLUSDI.bind(this);
         this.getMINUSDI = this.getMINUSDI.bind(this);
-        this.getRSI = this.getRSI.bind(this);
-        this.getOBV = this.getOBV.bind(this);
-        this.updateStock = this.updateStock.bind(this);
+        this.adhocRequest = this.adhocRequest.bind(this);
     }
 
    componentDidMount = () => {
-  //    this.getStates('AMD');
+      this.getStates('AMD');
+      this.getStates('SQ');
+      this.getStates('BZUN');
+      this.getStates('NVDA');
+      this.getStates('SHOP');
+      this.getStates('OLED');
+      this.getStates('ATVI');
+      this.getStates('LRCX');
+      this.getStates('DAL');
    }
 
    componentDidUpdate = () => {
@@ -94,7 +122,7 @@ export default class HomeScreen extends Component<{}> {
       }
    }
 
-   updateStock(){
+   async adhocRequest(){
      this.getStates('AMD');
      this.getStates('SQ');
      this.getStates('BZUN');
@@ -106,19 +134,16 @@ export default class HomeScreen extends Component<{}> {
      this.getStates('DAL');
    }
 
-   getStates(symbol) {
+   async getStates(symbol) {
      this.getPLUSDI('IXIC');
      this.getMINUSDI('IXIC');
      this.getEMA(symbol);
-     this.getSTOCH(symbol);
      this.getClosePrice(symbol);
      this.getPLUSDI(symbol);
      this.getMINUSDI(symbol);
-     this.getRSI(symbol);
-     this.getOBV(symbol);
    }
 
-    getClosePrice(symbol) {
+    async getClosePrice(symbol) {
      return fetch('https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+symbol+'&interval=1min&apikey=K0W08Y43EKGCJ16I')
        .then((response) => response.json())
        .then((responseJson) => {
@@ -128,6 +153,7 @@ export default class HomeScreen extends Component<{}> {
          this.setState({[symbol+'closePrice']: closePrice});
          console.log(symbol+' closePrice: ' + closePrice);
          this.setState({[symbol+'change']: true});
+         this.setState({[symbol+'lastUpdated']: key});
        })
        .catch((error) => {
          // console.log(responseJson);
@@ -135,7 +161,7 @@ export default class HomeScreen extends Component<{}> {
        });
    }
 
-   getEMA(symbol) {
+   async getEMA(symbol) {
     return fetch('https://www.alphavantage.co/query?function=EMA&symbol='+symbol+'&interval=1min&time_period=60&series_type=close&apikey=K0W08Y43EKGCJ16I')
       .then((response) => response.json())
       .then((responseJson) => {
@@ -160,59 +186,24 @@ export default class HomeScreen extends Component<{}> {
       });
   }
 
-  getOBV(symbol) {
-   return fetch('https://www.alphavantage.co/query?function=OBV&symbol='+symbol+'&interval=1min&apikey=K0W08Y43EKGCJ16I')
-     .then((response) => response.json())
-     .then((responseJson) => {
-       var result = responseJson["Technical Analysis: OBV"];
-       var key1 = Object.keys(result)[0];
-       var OBV1 = result[key1]["OBV"];
-       var key2 = Object.keys(result)[1];
-       var OBV2 = result[key2]["OBV"];
-       if(OBV1>OBV2){
-         this.setState({[symbol+'OBV']: true});
-       }
-       else {
-         this.setState({[symbol+'OBV']: false});
-       }
-       this.setState({[symbol+'change']: true});
-     })
-     .catch((error) => {
-       // console.log(responseJson);
-       // console.error(error);
-     });
- }
-
-  getSTOCH(symbol) {
-   return fetch('https://www.alphavantage.co/query?function=STOCH&symbol='+symbol+'&interval=1min&slowkmatype=1&slowdmatype=1&fastkperiod=14&apikey=K0W08Y43EKGCJ16I')
-     .then((response) => response.json())
-     .then((responseJson) => {
-       var result = responseJson["Technical Analysis: STOCH"];
-       var key = Object.keys(result)[0];
-       var SlowD = result[key]["SlowD"];
-       var SlowK = result[key]["SlowK"];
-       this.setState({[symbol+'SlowD']: SlowD});
-       this.setState({[symbol+'SlowK']: SlowK});
-       console.log(symbol+' SlowD: ' + SlowD);
-       console.log(symbol+' SlowK: ' + SlowK);
-       this.setState({[symbol+'change']: true});
-     })
-     .catch((error) => {
-       // console.log(responseJson);
-       // console.error(error);
-     });
- }
-
- getPLUSDI(symbol) {
+ async getPLUSDI(symbol) {
   return fetch('https://www.alphavantage.co/query?function=PLUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey=K0W08Y43EKGCJ16I')
     .then((response) => response.json())
     .then((responseJson) => {
       var result = responseJson["Technical Analysis: PLUS_DI"];
       var key = Object.keys(result)[0];
       var PLUS_DI = result[key]["PLUS_DI"];
+      var key2 = Object.keys(result)[1];
+      var PLUS_DI2 = result[key2]["PLUS_DI"];
+      if(PLUS_DI2<10 && PLUS_DI-PLUS_DI2>7){
+        this.setState({[symbol+'DIP_BUY']: true});
+      } else {
+        this.setState({[symbol+'DIP_BUY']: false});
+      }
       this.setState({[symbol+'PLUS_DI']: PLUS_DI});
       console.log(symbol+' PLUS_DI: ' + PLUS_DI);
       this.setState({[symbol+'change']: true});
+      this.setState({[symbol+'lastUpdated']: key});
     })
     .catch((error) => {
       // console.log(responseJson);
@@ -220,31 +211,20 @@ export default class HomeScreen extends Component<{}> {
     });
 }
 
-
-getRSI(symbol) {
- return fetch('https://www.alphavantage.co/query?function=RSI&symbol='+symbol+'&interval=1min&time_period=7&series_type=close&apikey=K0W08Y43EKGCJ16I')
-   .then((response) => response.json())
-   .then((responseJson) => {
-     var result = responseJson["Technical Analysis: RSI"];
-     var key = Object.keys(result)[0];
-     var RSI = result[key]["RSI"];
-     this.setState({[symbol+'RSI']: RSI});
-     console.log(symbol+' RSI: ' + RSI);
-     this.setState({[symbol+'change']: true});
-   })
-   .catch((error) => {
-     // console.log(responseJson);
-     // console.error(error);
-   });
-}
-
-getMINUSDI(symbol) {
+async getMINUSDI(symbol) {
  return fetch('https://www.alphavantage.co/query?function=MINUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey=K0W08Y43EKGCJ16I')
    .then((response) => response.json())
    .then((responseJson) => {
      var result = responseJson["Technical Analysis: MINUS_DI"];
      var key = Object.keys(result)[0];
      var MINUS_DI = result[key]["MINUS_DI"];
+     var key2 = Object.keys(result)[1];
+     var MINUS_DI2 = result[key2]["MINUS_DI"];
+     if(MINUS_DI2<10 && MINUS_DI-MINUS_DI2>7){
+       this.setState({[symbol+'UP_SELL']: true});
+     } else {
+       this.setState({[symbol+'UP_SELL']: false});
+     }
      this.setState({[symbol+'MINUS_DI']: MINUS_DI});
      console.log(symbol+' MINUS_DI: ' + MINUS_DI);
      this.setState({[symbol+'change']: true});
@@ -255,75 +235,74 @@ getMINUSDI(symbol) {
    });
 }
 
-  getSignal(symbol){
+  async getSignal(symbol){
     var MarketMINUS_DI = this.state['IXIC'+'MINUS_DI'];
     var MarketPLUS_DI = this.state['IXIC'+'PLUS_DI'];
     var closePrice = this.state[symbol+'closePrice'];
     var EMA = this.state[symbol+'EMA'];
-    var SlowD = this.state[symbol+'SlowD'];
-    var SlowK = this.state[symbol+'SlowK'];
     var PLUS_DI = this.state[symbol+'PLUS_DI'];
     var MINUS_DI = this.state[symbol+'MINUS_DI'];
-    var RSI = this.state[symbol+'RSI'];
-    var OBV = this.state[symbol+'OBV'];
+    var market = '';
+    var signal = '';
+    var DIP_BUY = this.state[symbol+'DIP_BUY'];
+    var UP_SELL = this.state[symbol+'UP_SELL'];
 
     if(MarketPLUS_DI > MarketMINUS_DI && MarketPLUS_DI>25){
-      this.setState({market: 'UP'});
+      market = 'U';
     }
     else if(MarketPLUS_DI < MarketMINUS_DI && MarketMINUS_DI>25){
-      this.setState({market: 'DOWN'});
+      market = 'D';
     }
     else {
-      this.setState({market: 'FLAT'});
+      market = 'F';
     }
-
-    if(EMA && SlowK>SlowD && SlowD<25 && PLUS_DI>MINUS_DI && PLUS_DI>25 && OBV){
-      this.setState({signal: 'STRONG BUY'});
+    this.setState({market: market});
+    if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
+      signal = 'B';
     }
-    else if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25 && SlowK>SlowD && OBV){
-      this.setState({signal: 'GOOD BUY'});
+    else if(EMA && PLUS_DI>MINUS_DI){
+      signal = 'PB';
     }
-    else if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25 && SlowK>SlowD){
-      this.setState({signal: 'BUY'});
+    else if(!EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+      signal = 'S';
     }
-    else if(EMA && RSI<30 && OBV){
-      this.setState({signal: 'BUY'});
-    }
-    else if(!EMA && PLUS_DI<MINUS_DI && MINUS_DI>25 && SlowK<SlowD && SlowD>75 && !OBV){
-      this.setState({signal: 'STRONG SELL'});
-    }
-    else if(!EMA && PLUS_DI<MINUS_DI && MINUS_DI>25 && SlowK<SlowD && !OBV){
-      this.setState({signal: 'SELL'});
-    }
-    else if(!EMA && ((PLUS_DI<MINUS_DI && MINUS_DI>25) || !OBV)){
-      this.setState({[symbol+'signal']: 'PARTIAL SELL'});
+    else if(!EMA && PLUS_DI<MINUS_DI){
+      signal = 'PS';
     }
     else{
-      this.setState({[symbol+'signal']: 'NEUTRAL'});
+      signal = 'N';
     }
+
+    if(DIP_BUY){
+      signal = 'DB';
+    }
+    else if(UP_SELL){
+      signal = 'US'
+    }
+    this.setState({[symbol+'signal']: signal});
     this.setState({[symbol+'change']: false});
   }
 
   render() {
     return (
       <View style={{backgroundColor: 'powderblue', flex: 1}}>
-          <View>
+          <ScrollView>
                 <Title>Stock Trading Application</Title>
-                <Market symbol='NASDAQ' signal={this.state.market} />
-                <StockRow symbol='AMD' closePrice={this.state.AMDclosePrice} signal={this.state.AMDsignal} />
-                <StockRow symbol='SQ' closePrice={this.state.SQclosePrice} signal={this.state.SQsignal} />
-                <StockRow symbol='BZUN' closePrice={this.state.BZUNclosePrice} signal={this.state.BZUNsignal} />
-                <StockRow symbol='NVDA' closePrice={this.state.NVDAclosePrice} signal={this.state.NVDAsignal} />
-                <StockRow symbol='SHOP' closePrice={this.state.SHOPclosePrice} signal={this.state.SHOPsignal} />
-                <StockRow symbol='OLED' closePrice={this.state.OLEDclosePrice} signal={this.state.OLEDsignal} />
-                <StockRow symbol='ATVI' closePrice={this.state.ATVIclosePrice} signal={this.state.ATVIsignal} />
-                <StockRow symbol='LRCX' closePrice={this.state.LRCXclosePrice} signal={this.state.LRCXsignal} />
-                <StockRow symbol='DAL' closePrice={this.state.DALclosePrice} signal={this.state.DALsignal} />
-          </View>
-          <Button
-              onPress={() => { this.updateStock()}}
-              title="Refresh"
-            />
+                <Market symbol='NASDAQ' signal={this.state.market} updated={this.state.IXIClastUpdated}/>
+                <StockRow symbol='AMD' closePrice={this.state.AMDclosePrice} signal={this.state.AMDsignal} updated={this.state.AMDlastUpdated}/>
+                <StockRow symbol='SQ' closePrice={this.state.SQclosePrice} signal={this.state.SQsignal} updated={this.state.SQlastUpdated}/>
+                <StockRow symbol='BZUN' closePrice={this.state.BZUNclosePrice} signal={this.state.BZUNsignal} updated={this.state.BZUNlastUpdated}/>
+                <StockRow symbol='NVDA' closePrice={this.state.NVDAclosePrice} signal={this.state.NVDAsignal} updated={this.state.NVDAlastUpdated}/>
+                <StockRow symbol='SHOP' closePrice={this.state.SHOPclosePrice} signal={this.state.SHOPsignal} updated={this.state.SHOPlastUpdated}/>
+                <StockRow symbol='OLED' closePrice={this.state.OLEDclosePrice} signal={this.state.OLEDsignal} updated={this.state.OLEDlastUpdated}/>
+                <StockRow symbol='ATVI' closePrice={this.state.ATVIclosePrice} signal={this.state.ATVIsignal} updated={this.state.ATVIlastUpdated}/>
+                <StockRow symbol='LRCX' closePrice={this.state.LRCXclosePrice} signal={this.state.LRCXsignal} updated={this.state.LRCXlastUpdated}/>
+                <StockRow symbol='DAL' closePrice={this.state.DALclosePrice} signal={this.state.DALsignal} updated={this.state.DALlastUpdated}/>
+                <Button
+                  onPress={() => { this.adhocRequest()}}
+                  title="Refresh"
+                />
+          </ScrollView>
         </View>
     );
   }

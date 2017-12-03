@@ -18,10 +18,10 @@ Signal.propTypes = {
 
 const styles = StyleSheet.create({
   buySignal: {
-    flex: 1,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
+    width: 40,
     height: 50,
     backgroundColor: 'green',
   },

@@ -4,6 +4,7 @@ import Sticker from './Sticker';
 import Signal from './Signal';
 import ClosePrice from './ClosePrice';
 import HomeScreen from './HomeScreen';
+import AppText from './AppText';
 import * as globalStyles from '../styles/global';
 
 class StockRow extends Component {
@@ -14,6 +15,7 @@ class StockRow extends Component {
           <Sticker>{this.props.symbol}</Sticker>
           <Signal>{this.props.signal}</Signal>
           <ClosePrice>{this.props.closePrice}</ClosePrice>
+          <Text>{this.props.updated}</Text>
         </View>
     );
   }
