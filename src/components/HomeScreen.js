@@ -32,6 +32,17 @@ export default class HomeScreen extends Component<{}> {
              LRCXchange: false,
              DALchange: false,
 
+             IXICKey: 'K0W08Y43EKGCJ16I',
+      			 AMDKey: '5OG3POJL018DL4DZ',
+             SQKey: 'VA76JKZMHM8RZ56Z',
+             BZUNKey: 'Z02YHGJJDF0LIQ88',
+             NVDAKey: '655NLMNKSLBQ4FIF',
+             SHOPKey: 'CGLI213JP6U8EPAP',
+             OLEDKey: '74HBRQWY4QMQTPY9',
+             ATVIKey: 'R5J75BA79Z2E73GZ',
+             LRCXKey: '8HA6MDBOUY1YF8Y6',
+             DALKey: 'IUTT07YHJRPG6XY7',
+
              AMDDIP_BUY: false,
              SQDIP_BUY: false,
              BZUNDIP_BUY: false,
@@ -60,6 +71,7 @@ export default class HomeScreen extends Component<{}> {
         }
 
         setInterval(() => {
+          this.getStates('IXIC');
           this.getStates('AMD');
           this.getStates('SQ');
           this.getStates('BZUN');
@@ -81,15 +93,16 @@ export default class HomeScreen extends Component<{}> {
     }
 
    componentDidMount = () => {
-      this.getStates('AMD');
-      this.getStates('SQ');
-      this.getStates('BZUN');
-      this.getStates('NVDA');
-      this.getStates('SHOP');
-      this.getStates('OLED');
-      this.getStates('ATVI');
-      this.getStates('LRCX');
-      this.getStates('DAL');
+     this.getStates('IXIC');
+     this.getStates('AMD');
+     this.getStates('SQ');
+     this.getStates('BZUN');
+     this.getStates('NVDA');
+     this.getStates('SHOP');
+     this.getStates('OLED');
+     this.getStates('ATVI');
+     this.getStates('LRCX');
+     this.getStates('DAL');
    }
 
    componentDidUpdate = () => {
@@ -120,9 +133,13 @@ export default class HomeScreen extends Component<{}> {
       if(this.state.DALchange){
         this.getSignal('DAL');
       }
+      if(this.state.IXICchange){
+        this.getSignal('IXIC');
+      }
    }
 
    async adhocRequest(){
+     this.getStates('IXIC');
      this.getStates('AMD');
      this.getStates('SQ');
      this.getStates('BZUN');
@@ -135,8 +152,6 @@ export default class HomeScreen extends Component<{}> {
    }
 
    async getStates(symbol) {
-     this.getPLUSDI('IXIC');
-     this.getMINUSDI('IXIC');
      this.getEMA(symbol);
      this.getClosePrice(symbol);
      this.getPLUSDI(symbol);
@@ -144,7 +159,8 @@ export default class HomeScreen extends Component<{}> {
    }
 
     async getClosePrice(symbol) {
-     return fetch('https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+symbol+'&interval=1min&apikey=K0W08Y43EKGCJ16I')
+     var API = this.state[symbol+'Key'];
+     return fetch('https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+symbol+'&interval=1min&apikey='+API)
        .then((response) => response.json())
        .then((responseJson) => {
          var result = responseJson["Time Series (1min)"];
@@ -153,16 +169,20 @@ export default class HomeScreen extends Component<{}> {
          this.setState({[symbol+'closePrice']: closePrice});
          console.log(symbol+' closePrice: ' + closePrice);
          this.setState({[symbol+'change']: true});
-         this.setState({[symbol+'lastUpdated']: key});
+         var today = new Date();
+         var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+         this.setState({[symbol+'lastUpdated']: time});
        })
-       .catch((error) => {
+       .catch((error,symbol,response) => {
+         this.getClosePrice(symbol);
          // console.log(responseJson);
          // console.error(error);
        });
    }
 
    async getEMA(symbol) {
-    return fetch('https://www.alphavantage.co/query?function=EMA&symbol='+symbol+'&interval=1min&time_period=60&series_type=close&apikey=K0W08Y43EKGCJ16I')
+     var API = this.state[symbol+'Key'];
+    return fetch('https://www.alphavantage.co/query?function=EMA&symbol='+symbol+'&interval=1min&time_period=60&series_type=close&apikey='+API)
       .then((response) => response.json())
       .then((responseJson) => {
         var result = responseJson["Technical Analysis: EMA"];
@@ -180,14 +200,16 @@ export default class HomeScreen extends Component<{}> {
         }
         this.setState({[symbol+'change']: true});
       })
-      .catch((error) => {
+      .catch((error,symbol) => {
+        this.getEMA(symbol);
         // console.log(responseJson);
         // console.error(error);
       });
   }
 
  async getPLUSDI(symbol) {
-  return fetch('https://www.alphavantage.co/query?function=PLUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey=K0W08Y43EKGCJ16I')
+   var API = this.state[symbol+'Key'];
+  return fetch('https://www.alphavantage.co/query?function=PLUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey='+API)
     .then((response) => response.json())
     .then((responseJson) => {
       var result = responseJson["Technical Analysis: PLUS_DI"];
@@ -204,16 +226,20 @@ export default class HomeScreen extends Component<{}> {
       this.setState({[symbol+'PLUS_DI2']: PLUS_DI2});
       console.log(symbol+' PLUS_DI: ' + PLUS_DI);
       this.setState({[symbol+'change']: true});
-      this.setState({[symbol+'lastUpdated']: key});
+      var today = new Date();
+      var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+      this.setState({[symbol+'lastUpdated']: time});
     })
-    .catch((error) => {
+    .catch((error,symbol) => {
+      this.getPLUSDI(symbol);
       // console.log(responseJson);
       // console.error(error);
     });
 }
 
 async getMINUSDI(symbol) {
- return fetch('https://www.alphavantage.co/query?function=MINUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey=K0W08Y43EKGCJ16I')
+ var API = this.state[symbol+'Key'];
+ return fetch('https://www.alphavantage.co/query?function=MINUS_DI&symbol='+symbol+'&interval=1min&time_period=7&apikey='+API)
    .then((response) => response.json())
    .then((responseJson) => {
      var result = responseJson["Technical Analysis: MINUS_DI"];
@@ -231,7 +257,8 @@ async getMINUSDI(symbol) {
      console.log(symbol+' MINUS_DI: ' + MINUS_DI);
      this.setState({[symbol+'change']: true});
    })
-   .catch((error) => {
+   .catch((error,symbol) => {
+     this.getMINUSDI(symbol);
      // console.log(responseJson);
      // console.error(error);
    });
@@ -268,7 +295,7 @@ async getMINUSDI(symbol) {
       market = 'D';
     }
     this.setState({market: market});
-    
+
     if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
       signal = 'B';
     }

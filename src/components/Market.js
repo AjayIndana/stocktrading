@@ -4,6 +4,7 @@ import Sticker from './Sticker';
 import Signal from './Signal';
 import ClosePrice from './ClosePrice';
 import HomeScreen from './HomeScreen';
+import Time from './Time';
 import * as globalStyles from '../styles/global';
 
 class Market extends Component {
@@ -13,7 +14,7 @@ class Market extends Component {
         <View style={[styles.stockRow]}>
           <Sticker>{this.props.symbol}</Sticker>
           <Signal>{this.props.signal}</Signal>
-          <Text>{this.props.updated}</Text>
+          <Time>{this.props.updated}</Time>
         </View>
     );
   }
