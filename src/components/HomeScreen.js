@@ -201,6 +201,7 @@ export default class HomeScreen extends Component<{}> {
         this.setState({[symbol+'DIP_BUY']: false});
       }
       this.setState({[symbol+'PLUS_DI']: PLUS_DI});
+      this.setState({[symbol+'PLUS_DI2']: PLUS_DI2});
       console.log(symbol+' PLUS_DI: ' + PLUS_DI);
       this.setState({[symbol+'change']: true});
       this.setState({[symbol+'lastUpdated']: key});
@@ -226,6 +227,7 @@ async getMINUSDI(symbol) {
        this.setState({[symbol+'UP_SELL']: false});
      }
      this.setState({[symbol+'MINUS_DI']: MINUS_DI});
+     this.setState({[symbol+'MINUS_DI2']: MINUS_DI2});
      console.log(symbol+' MINUS_DI: ' + MINUS_DI);
      this.setState({[symbol+'change']: true});
    })
@@ -237,7 +239,9 @@ async getMINUSDI(symbol) {
 
   async getSignal(symbol){
     var MarketMINUS_DI = this.state['IXIC'+'MINUS_DI'];
+    var MarketMINUS_DI2 = this.state['IXIC'+'MINUS_DI2'];
     var MarketPLUS_DI = this.state['IXIC'+'PLUS_DI'];
+    var MarketPLUS_DI2 = this.state['IXIC'+'PLUS_DI2'];
     var closePrice = this.state[symbol+'closePrice'];
     var EMA = this.state[symbol+'EMA'];
     var PLUS_DI = this.state[symbol+'PLUS_DI'];
@@ -256,7 +260,15 @@ async getMINUSDI(symbol) {
     else {
       market = 'F';
     }
+
+    if(MarketPLUS_DI2-MarketPLUS_DI>10){
+      market = 'U';
+    }
+    else if(MarketMINUS_DI2-MarketMINUS_DI>10){
+      market = 'D';
+    }
     this.setState({market: market});
+    
     if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
       signal = 'B';
     }
