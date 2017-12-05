@@ -166,12 +166,30 @@ export default class HomeScreen extends Component<{}> {
          var result = responseJson["Time Series (1min)"];
          var key = Object.keys(result)[0];
          var closePrice = result[key]["4. close"];
+         var open = result[key]["1. open"];
+         var volume = result[key]["5. volume"];
+         var avgVolume = volume;
+         for (var i = 1; i < 14; i++) {
+            var key_val = Object.keys(result)[i];
+            avgVolume = avgVolume + result[key_val]["5. volume"];
+          }
+          avgVolume = avgVolume/14;
+          if(closePrice>open && volume>avgVolume){
+             this.setState({[symbol+'BULL']: true});
+          }
+          else{
+             this.setState({[symbol+'BULL']: false});
+          }
+          if(closePrice<open && volume>avgVolume){
+             this.setState({[symbol+'BEAR']: true});
+          }
+          else{
+             this.setState({[symbol+'BEAR']: false});
+          }
          this.setState({[symbol+'closePrice']: closePrice});
          console.log(symbol+' closePrice: ' + closePrice);
          this.setState({[symbol+'change']: true});
-         var today = new Date();
-         var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-         this.setState({[symbol+'lastUpdated']: time});
+         this.setState({[symbol+'lastUpdated']: key});
        })
        .catch((error,symbol,response) => {
          this.getClosePrice(symbol);
@@ -226,9 +244,7 @@ export default class HomeScreen extends Component<{}> {
       this.setState({[symbol+'PLUS_DI2']: PLUS_DI2});
       console.log(symbol+' PLUS_DI: ' + PLUS_DI);
       this.setState({[symbol+'change']: true});
-      var today = new Date();
-      var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-      this.setState({[symbol+'lastUpdated']: time});
+      this.setState({[symbol+'lastUpdated']: key});
     })
     .catch((error,symbol) => {
       this.getPLUSDI(symbol);
@@ -277,6 +293,7 @@ async getMINUSDI(symbol) {
     var signal = '';
     var DIP_BUY = this.state[symbol+'DIP_BUY'];
     var UP_SELL = this.state[symbol+'UP_SELL'];
+    var BULL = this.state[symbol+'BULL'];
 
     if(MarketPLUS_DI > MarketMINUS_DI && MarketPLUS_DI>25){
       market = 'U';
@@ -296,26 +313,26 @@ async getMINUSDI(symbol) {
     }
     this.setState({market: market});
 
-    if(EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
+    if(BULL && EMA && PLUS_DI>MINUS_DI && PLUS_DI>25){
       signal = 'B';
     }
-    else if(EMA && PLUS_DI>MINUS_DI){
+    else if(BULL && EMA && PLUS_DI>MINUS_DI){
       signal = 'PB';
     }
-    else if(!EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
+    else if(BEAR && !EMA && PLUS_DI<MINUS_DI && MINUS_DI>25){
       signal = 'S';
     }
-    else if(!EMA && PLUS_DI<MINUS_DI){
+    else if(BEAR && !EMA && PLUS_DI<MINUS_DI){
       signal = 'PS';
     }
     else{
       signal = 'N';
     }
 
-    if(DIP_BUY){
+    if(BULL && DIP_BUY){
       signal = 'DB';
     }
-    else if(UP_SELL){
+    else if(BEAR && UP_SELL){
       signal = 'US'
     }
     this.setState({[symbol+'signal']: signal});
